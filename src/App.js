@@ -1,23 +1,52 @@
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import SearchBar from './components/SearchBar';
+import ContactList from './components/ContactList';
+import AddContact from './components/AddContact';
 import './App.css';
 
 function App() {
+  const [contacts, setContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/users');
+        const data = await response.json();
+        setContacts(data);
+        setFilteredContacts(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error al obtener contactos:', error);
+      }
+    };
+
+    fetchContacts();
+  }, []);
+
+  const handleSearch = (query) => {
+    if (query) {
+      const filtered = contacts.filter(contact =>
+        contact.name.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredContacts(filtered);
+    } else {
+      setFilteredContacts(contacts);
+    }
+  };
+
+  const handleAddContact = (newContact) => {
+    setContacts([...contacts, newContact]);
+    setFilteredContacts([...filteredContacts, newContact]); // También actualiza la lista filtrada
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>Lista de contactos</h1>
+      <AddContact onAdd={handleAddContact} />
+      <SearchBar onSearch={handleSearch} />
+      {loading ? <p>Cargando....</p> : <ContactList contacts={filteredContacts} />}
     </div>
   );
 }
